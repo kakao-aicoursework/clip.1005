@@ -10,7 +10,7 @@ from pynecone.base import Base
 
 
 # openai.api_key = "<YOUR_OPENAI_API_KEY>"
-openai.api_key = "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"
+openai.api_key = ""
 
 
 parallel_example = {
