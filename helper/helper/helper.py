@@ -4,101 +4,96 @@
 import openai
 import os
 from datetime import datetime
-
-import pynecone as pc
 from pynecone.base import Base
 
+from typing import List
+import asyncio
+from concurrent.futures import ProcessPoolExecutor
+import pynecone as pc
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+from langchain import LLMChain
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts.chat import (
+    ChatPromptTemplate,
+    HumanMessagePromptTemplate,
+)
+from langchain.schema import SystemMessage
 
-# openai.api_key = "<YOUR_OPENAI_API_KEY>"
-openai.api_key = ""
+from langchain.utilities import DuckDuckGoSearchAPIWrapper
+import tiktoken
 
-
-parallel_example = {
-    "한국어": ["오늘 날씨 어때", "딥러닝 기반의 AI기술이 인기를끌고 있다."],
-    "영어": ["How is the weather today", "Deep learning-based AI technology is gaining popularity."],
-    "일본어": ["今日の天気はどうですか", "ディープラーニングベースのAIテクノロジーが人気を集めています。"]
-}
-
-chatbot_example = {
-    "qna": ["안녕하세요", "너의 목적은 무엇이니?"],
-    "ans": ["제 이름은 챗봇서비스 입니다. 어떤일을 도와 드릴까요?", "저는 인공지능 기술을 바탕으로 개발자에게 도움을 주는 챗봇입니다."]
-}
-
-
-def translate_text_using_text_davinci(text, src_lang, trg_lang) -> str:
-    response = openai.Completion.create(engine="text-davinci-003",
-                                        prompt=f"Translate the following {src_lang} text to {trg_lang}: {text}",
-                                        max_tokens=200,
-                                        n=1,
-                                        temperature=1
-                                        )
-    translated_text = response.choices[0].text.strip()
-    return translated_text
+import os
+os.environ["OPENAI_API_KEY"] = "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"
 
 
-def translate_text_using_chatgpt(text, src_lang, trg_lang) -> str:
-    # fewshot 예제를 만들고
-    def build_fewshot(src_lang, trg_lang):
-        src_examples = parallel_example[src_lang]
-        trg_examples = parallel_example[trg_lang]
+###########################################################
+# Helpers
 
-        fewshot_messages = []
+def read_prompt_template(file_path: str) -> str:
+    with open(file_path, "r") as f:
+        prompt_template = f.read()
 
-        for src_text, trg_text in zip(src_examples, trg_examples):
-            fewshot_messages.append({"role": "user", "content": src_text})
-            fewshot_messages.append({"role": "assistant", "content": trg_text})
+    return prompt_template
 
-        return fewshot_messages
+def build_chain(llm):
+    sink_template = read_prompt_template("./project_data_카카오싱크.txt")
+    
+    system_message = f'''너는 카카오싱크 API에 대해 설명해주는 챗봇이다.
+    다음의 카카오싱크 설명서를 이해하여 assistant는 user의 카카오싱크에 대한 질문에 대해 자세히 잘 답변해야 한다.
+    {sink_template}
+    '''
+    system_message_prompt = SystemMessage(content=system_message)
 
-    # system instruction 만들고
-    system_instruction = f"assistant는 번역앱으로서 동작한다. {src_lang}를 {trg_lang}로 적절하게 번역하고 번역된 텍스트만 출력한다."
+    human_template = "{qna}"
+    human_message_prompt = HumanMessagePromptTemplate.from_template(
+        human_template)
 
-    # messages를만들고
-    fewshot_messages = build_fewshot(src_lang=src_lang, trg_lang=trg_lang)
+    chat_prompt = ChatPromptTemplate.from_messages([system_message_prompt,
+                                                    human_message_prompt])
 
-    messages = [{"role": "system", "content": system_instruction},
-                *fewshot_messages,
-                {"role": "user", "content": text}
-                ]
+    chain = LLMChain(llm=llm, prompt=chat_prompt, verbose=True)
+    return chain
 
-    # API 호출
-    response = openai.ChatCompletion.create(model="gpt-3.5-turbo",
-                                            messages=messages)
-    translated_text = response['choices'][0]['message']['content']
-    # Return
-    return translated_text
+
+
+def truncate_text(text, max_tokens=3000):
+    tokens = enc.encode(text)
+    if len(tokens) <= max_tokens:  # 토큰 수가 이미 3000 이하라면 전체 텍스트 반환
+        return text
+    return enc.decode(tokens[:max_tokens])
+
+
+def task(qna):
+    full_content_truncated = truncate_text(qna, max_tokens=3500)
+
+    ans = chain.run(qna=full_content_truncated)
+    print("ans:", ans)
+
+    return ans
+
+###########################################################
+# Instances
+llm = ChatOpenAI(temperature=0.8)
+
+search = DuckDuckGoSearchAPIWrapper()
+search.region = 'kr-kr'
+
+enc = tiktoken.encoding_for_model("gpt-3.5-turbo")
+
+chain = build_chain(llm)
+
+
+###########################################################
+
+
 
 def dev_chat_bot_using_chatgpt(text) -> str:
-    # fewshot 예제를 만들고
-    def build_fewshot():
-        src_examples = chatbot_example['qna']
-        trg_examples = chatbot_example['ans']
+    return task(text)
 
-        fewshot_messages = []
-
-        for src_text, trg_text in zip(src_examples, trg_examples):
-            fewshot_messages.append({"role": "user", "content": src_text})
-            fewshot_messages.append({"role": "assistant", "content": trg_text})
-
-        return fewshot_messages
-
-    # system instruction 만들고
-    system_instruction = f"assistant는 개발자를 돕는 '챗봇 서비스'로 동작한다. user의 소프트웨어 개발 질문에 대해 개발자들이 이해할 수 있게 적절하게 답변한다."
-
-    # messages를만들고
-    fewshot_messages = build_fewshot()
-
-    messages = [{"role": "system", "content": system_instruction},
-                *fewshot_messages,
-                {"role": "user", "content": text}
-                ]
-
-    # API 호출
-    response = openai.ChatCompletion.create(model="gpt-3.5-turbo",
-                                            messages=messages)
-    translated_text = response['choices'][0]['message']['content']
-    # Return
-    return translated_text
+###########################################################
+# Web
 
 
 class Message(Base):
@@ -117,20 +112,20 @@ class State(pc.State):
     src_lang: str = "한국어"
     trg_lang: str = "영어"
 
-    @pc.var
     def output(self) -> str:
+        print("output in ", self.text)
         if not self.text.strip():
             return "Translations will appear here."
-        # translated = translate_text_using_chatgpt(
-        #     self.text, src_lang=self.src_lang, trg_lang=self.trg_lang)
         ans = dev_chat_bot_using_chatgpt(self.text)
         return ans
 
     def post(self):
+        print(self.text)
+        # return
         self.messages += [
             Message(
                 original_text=self.text,
-                text=self.output,
+                text=self.output(),
                 created_at=datetime.now().strftime("%B %d, %Y %I:%M %p"),
                 to_lang=self.trg_lang,
             )
@@ -193,61 +188,13 @@ def message(message):
     )
 
 
-def smallcaps(text, **kwargs):
-    return pc.text(
-        text,
-        font_size="0.7rem",
-        font_weight="bold",
-        text_transform="uppercase",
-        letter_spacing="0.05rem",
-        **kwargs,
-    )
-
-
-def output():
-    return pc.box(
-        pc.box(
-            smallcaps(
-                "Output",
-                color="#aeaeaf",
-                background_color="white",
-                padding_x="0.1rem",
-            ),
-            position="absolute",
-            top="-0.5rem",
-        ),
-        pc.text(State.output),
-        padding="1rem",
-        border="1px solid #eaeaef",
-        margin_top="1rem",
-        border_radius="8px",
-        position="relative",
-    )
-
 
 def index():
     """The main view."""
     return pc.container(
-        # header(),
-
-        # pc.select(
-        #     list(parallel_example.keys()),
-        #     value=State.src_lang,
-        #     placeholder="Select a language",
-        #     on_change=State.set_src_lang,
-        #     margin_top="1rem",
-        # ),
-        # pc.select(
-        #     list(parallel_example.keys()),
-        #     value=State.trg_lang,
-        #     placeholder="Select a language",
-        #     on_change=State.set_trg_lang,
-        #     margin_top="1rem",
-        # ),
-        # output(),
 
         pc.box(
-            text_box("안녕하세요. 챗봇 서스비를 시작합니다. 궁금하신 내용을 물어보세요!"),
+            text_box("안녕하세요. 카카오싱크 챗봇 서비스를 시작합니다. 궁금하신 내용을 물어보세요!"),
             background_color="#f5f5f5",
             padding="1rem",
             border_radius="8px",
@@ -262,7 +209,7 @@ def index():
 
 
         pc.input(
-            placeholder="Text to translate",
+            placeholder="Text to question",
             on_blur=State.set_text,
             margin_top="1rem",
             border_color="#eaeaef"
@@ -276,5 +223,5 @@ def index():
 
 # Add state and page to the app.
 app = pc.App(state=State)
-app.add_page(index, title="Translator")
+app.add_page(index, title="Kakaosink Chatbot")
 app.compile()
