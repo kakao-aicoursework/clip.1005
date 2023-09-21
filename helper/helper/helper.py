@@ -105,7 +105,6 @@ class Message(Base):
     original_text: str
     text: str
     created_at: str
-    to_lang: str
 
 
 class State(pc.State):
@@ -129,8 +128,7 @@ class State(pc.State):
             Message(
                 original_text=self.text,
                 text=self.output(),
-                created_at=datetime.now().strftime("%B %d, %Y %I:%M %p"),
-                to_lang=self.trg_lang,
+                created_at=datetime.now().strftime("%B %d, %Y %I:%M %p")
             )
         ]
 
