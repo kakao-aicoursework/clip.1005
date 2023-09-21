@@ -24,7 +24,7 @@ from langchain.schema import SystemMessage
 from langchain.utilities import DuckDuckGoSearchAPIWrapper
 import tiktoken
 
-def load_api_key(filename='api_key.txt'):
+def load_api_key(filename='api_key.key'):
     try:
         with open(filename, 'r') as file:
             api_key = file.read()
@@ -82,6 +82,9 @@ def task(qna):
 
     return ans
 
+def dev_chat_bot_using_chatgpt(text) -> str:
+    return task(text)
+
 ###########################################################
 # Instances
 llm = ChatOpenAI(temperature=0.8)
@@ -93,13 +96,6 @@ enc = tiktoken.encoding_for_model("gpt-3.5-turbo")
 
 chain = build_chain(llm)
 
-
-###########################################################
-
-
-
-def dev_chat_bot_using_chatgpt(text) -> str:
-    return task(text)
 
 ###########################################################
 # Web
@@ -118,13 +114,11 @@ class State(pc.State):
     text: str = ""
     screen = []
     messages: list[Message] = []
-    src_lang: str = "한국어"
-    trg_lang: str = "영어"
 
     def output(self) -> str:
         print("output in ", self.text)
         if not self.text.strip():
-            return "Translations will appear here."
+            return "Answer will appear here."
         ans = dev_chat_bot_using_chatgpt(self.text)
         return ans
 
@@ -178,16 +172,7 @@ def message(message):
     return pc.box(
         pc.vstack(
             text_box(message.original_text),
-            # down_arrow(),
             text_box(message.text),
-            # pc.box(
-            #     pc.text(message.to_lang),
-            #     pc.text(" · ", margin_x="0.3rem"),
-            #     pc.text(message.created_at),
-            #     display="flex",
-            #     font_size="0.8rem",
-            #     color="#666",
-            # ),
             spacing="0.3rem",
             align_items="left",
         ),
