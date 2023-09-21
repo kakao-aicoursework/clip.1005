@@ -2,4 +2,3 @@
 
 
 Kakao Developers helper BOT 만들기 : ./helper
-Kakao Sink Chat BOT : ./kakaosink
