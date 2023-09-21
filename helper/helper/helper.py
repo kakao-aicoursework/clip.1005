@@ -25,7 +25,7 @@ from langchain.utilities import DuckDuckGoSearchAPIWrapper
 import tiktoken
 
 import os
-os.environ["OPENAI_API_KEY"] = "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"
+os.environ["OPENAI_API_KEY"] = ""
 
 
 ###########################################################
