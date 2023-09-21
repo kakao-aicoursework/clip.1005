@@ -24,8 +24,17 @@ from langchain.schema import SystemMessage
 from langchain.utilities import DuckDuckGoSearchAPIWrapper
 import tiktoken
 
+def load_api_key(filename='api_key.txt'):
+    try:
+        with open(filename, 'r') as file:
+            api_key = file.read()
+            return api_key.strip()
+    except Exception as e:
+        print(f"API 키 읽기 중 오류 발생: {str(e)}")
+        return None
+
 import os
-os.environ["OPENAI_API_KEY"] = ""
+os.environ["OPENAI_API_KEY"] = load_api_key()
 
 
 ###########################################################

@@ -3,3 +3,6 @@ __pycache__/
 pynecone.db
 *.py[cod]
 .web
+
+# API 키 파일을 무시
+api_key.txt
