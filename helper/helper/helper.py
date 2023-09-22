@@ -86,7 +86,7 @@ def index():
     return pc.container(
 
         pc.box(
-            text_box("안녕하세요. 카카오싱크 챗봇 서비스를 시작합니다. 궁금하신 내용을 물어보세요!"),
+            text_box("안녕하세요. 카카오 챗봇 서비스를 시작합니다. 궁금하신 내용을 물어보세요!"),
             background_color="#f5f5f5",
             padding="1rem",
             border_radius="8px",
