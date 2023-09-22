@@ -6,3 +6,5 @@ pynecone.db
 
 # API 키 파일을 무시
 *.key
+chat_history/*
+chroma_persist/*

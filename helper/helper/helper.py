@@ -1,111 +1,18 @@
-"""Welcome to Pynecone! This file outlines the steps to create a basic app."""
-
-# Import pynecone.
-import openai
-import os
 from datetime import datetime
 from pynecone.base import Base
-
-from typing import List
-import asyncio
-from concurrent.futures import ProcessPoolExecutor
 import pynecone as pc
-import requests
-from bs4 import BeautifulSoup
-import pandas as pd
-from langchain import LLMChain
-from langchain.chat_models import ChatOpenAI
-from langchain.prompts.chat import (
-    ChatPromptTemplate,
-    HumanMessagePromptTemplate,
-)
-from langchain.schema import SystemMessage
 
-from langchain.utilities import DuckDuckGoSearchAPIWrapper
-import tiktoken
+from helper.kakao_chatbot import KakaoChatbot
 
-def load_api_key(filename='api_key.key'):
-    try:
-        with open(filename, 'r') as file:
-            api_key = file.read()
-            return api_key.strip()
-    except Exception as e:
-        print(f"API 키 읽기 중 오류 발생: {str(e)}")
-        return None
-
-import os
-os.environ["OPENAI_API_KEY"] = load_api_key()
-
-
-###########################################################
-# Helpers
-
-def read_prompt_template(file_path: str) -> str:
-    with open(file_path, "r") as f:
-        prompt_template = f.read()
-
-    return prompt_template
-
-def build_chain(llm):
-    sink_template = read_prompt_template("./project_data_카카오싱크.txt")
-    
-    system_message = f'''너는 카카오싱크 API에 대해 설명해주는 챗봇이다.
-    다음의 카카오싱크 설명서를 이해하여 assistant는 user의 카카오싱크에 대한 질문에 대해 자세히 잘 답변해야 한다.
-    {sink_template}
-    '''
-    system_message_prompt = SystemMessage(content=system_message)
-
-    human_template = "{qna}"
-    human_message_prompt = HumanMessagePromptTemplate.from_template(
-        human_template)
-
-    chat_prompt = ChatPromptTemplate.from_messages([system_message_prompt,
-                                                    human_message_prompt])
-
-    chain = LLMChain(llm=llm, prompt=chat_prompt, verbose=True)
-    return chain
-
-
-
-def truncate_text(text, max_tokens=3000):
-    tokens = enc.encode(text)
-    if len(tokens) <= max_tokens:  # 토큰 수가 이미 3000 이하라면 전체 텍스트 반환
-        return text
-    return enc.decode(tokens[:max_tokens])
-
-
-def task(qna):
-    full_content_truncated = truncate_text(qna, max_tokens=3500)
-
-    ans = chain.run(qna=full_content_truncated)
-    print("ans:", ans)
-
-    return ans
-
-def dev_chat_bot_using_chatgpt(text) -> str:
-    return task(text)
-
-###########################################################
-# Instances
-llm = ChatOpenAI(temperature=0.8)
-
-search = DuckDuckGoSearchAPIWrapper()
-search.region = 'kr-kr'
-
-enc = tiktoken.encoding_for_model("gpt-3.5-turbo")
-
-chain = build_chain(llm)
-
+kakao_chatbot = KakaoChatbot()
 
 ###########################################################
 # Web
-
 
 class Message(Base):
     original_text: str
     text: str
     created_at: str
-
 
 class State(pc.State):
     """The app state."""
@@ -118,12 +25,11 @@ class State(pc.State):
         print("output in ", self.text)
         if not self.text.strip():
             return "Answer will appear here."
-        ans = dev_chat_bot_using_chatgpt(self.text)
+        ans = kakao_chatbot.answer(self.text)
         return ans
 
     def post(self):
         print(self.text)
-        # return
         self.messages += [
             Message(
                 original_text=self.text,
@@ -132,9 +38,8 @@ class State(pc.State):
             )
         ]
 
-
+###########################################################
 # Define views.
-
 
 def header():
     """Basic instructions to get started."""
@@ -147,7 +52,6 @@ def header():
         ),
     )
 
-
 def down_arrow():
     return pc.vstack(
         pc.icon(
@@ -156,7 +60,6 @@ def down_arrow():
         )
     )
 
-
 def text_box(text):
     return pc.text(
         text,
@@ -164,7 +67,6 @@ def text_box(text):
         padding="1rem",
         border_radius="8px",
     )
-
 
 def message(message):
     return pc.box(
@@ -178,8 +80,6 @@ def message(message):
         padding="1rem",
         border_radius="8px",
     )
-
-
 
 def index():
     """The main view."""
@@ -211,7 +111,6 @@ def index():
         padding="2rem",
         max_width="600px"
     )
-
 
 # Add state and page to the app.
 app = pc.App(state=State)

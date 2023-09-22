@@ -1,3 +1,4 @@
+# python==3.9.13
 openai==0.28.0
 langchain==0.0.250
 pydantic==1.10.11
@@ -9,3 +10,7 @@ requests==2.31.0
 
 numpy==1.24.1
 tqdm==4.66.1
+
+chromadb
+unstructured
+google-api-wrapper
