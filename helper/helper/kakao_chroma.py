@@ -57,7 +57,7 @@ class KakaoChroma:
         )
         print('db success')
 
-    def upload_embeddings_from_dir(dir_path):
+    def upload_embeddings_from_dir(self,dir_path):
         failed_upload_files = []
 
         for root, dirs, files in os.walk(dir_path):

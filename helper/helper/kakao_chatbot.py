@@ -21,6 +21,7 @@ USAGE_STEP2_PROMPT_TEMPLATE = os.path.join(CUR_DIR, "prompt/usage_guide.txt")
 DEFAULT_RESPONSE_PROMPT_TEMPLATE = os.path.join(CUR_DIR, "prompt/default_response.txt")
 INTENT_LIST_TXT = os.path.join(CUR_DIR, "prompt/intent_list.txt")
 INTENT_PROMPT_TEMPLATE = os.path.join(CUR_DIR, "prompt/parse_intent.txt")
+SUMMARIZE_TRANSLATE_PROMPT_TEMPLATE = os.path.join(CUR_DIR, "prompt/summarize_translate.txt")
 SEARCH_VALUE_CHECK_PROMPT_TEMPLATE = os.path.join(CUR_DIR, "prompt/search_value_check.txt")
 SEARCH_COMPRESSION_PROMPT_TEMPLATE = os.path.join(CUR_DIR, "prompt/search_compress.txt")
 
@@ -81,8 +82,14 @@ class KakaoChatbot:
             output_key="intent",
         )
         default_chain = cc(
-            template_path=DEFAULT_RESPONSE_PROMPT_TEMPLATE, output_key="output"
+            template_path=DEFAULT_RESPONSE_PROMPT_TEMPLATE,
+            output_key="output"
         )
+        summarize_translate_chain = cc(
+            template_path=SUMMARIZE_TRANSLATE_PROMPT_TEMPLATE,
+            output_key="output",
+        )
+
         search_value_check_chain = cc(
             template_path=SEARCH_VALUE_CHECK_PROMPT_TEMPLATE,
             output_key="output",
@@ -110,19 +117,17 @@ class KakaoChatbot:
         if intent == "Usage":
             context["related_documents"] = self.chroma.query_db(context["user_message"])
 
-            answer = ""
             for step in [usage_step1_chain, usage_step2_chain]:
                 context = step(context)
-                answer += context[step.output_key]
-                answer += "\n\n"
+            answer = context[step.output_key]
+
         elif intent == "Tutorials":
             context["related_documents"] = self.chroma.query_db(context["user_message"])
 
-            answer = ""
             for step in [tutorial_step1_chain, tutorial_step2_chain]:
                 context = step(context)
-                answer += context[step.output_key]
-                answer += "\n\n"
+            answer = context[step.output_key]
+            
         else:
             context["related_documents"] = self.chroma.query_db(context["user_message"])
 
@@ -135,6 +140,9 @@ class KakaoChatbot:
                 context["compressed_web_search_results"] = search_compression_chain.run(context)
 
             answer = default_chain.run(context)
+
+        context["answer"] = answer
+        answer = summarize_translate_chain.run(context)
 
         self.history.log_user_message(user_message)
         self.history.log_bot_message(answer)
