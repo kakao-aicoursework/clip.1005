@@ -4,18 +4,17 @@ from langchain.tools import Tool
 from langchain.utilities import DuckDuckGoSearchAPIWrapper
 from langchain.utilities import GoogleSearchAPIWrapper
 
-
-duckSearch = DuckDuckGoSearchAPIWrapper()
-duckSearch.region = 'kr-kr'
-
-googleSearch = GoogleSearchAPIWrapper(
-    google_api_key=os.getenv("GOOGLE_API_KEY","AIzaSyD0wBhIH0UCqenSjc7nu8HLEbfZI5C74OE"),
-    google_cse_id=os.getenv("GOOGLE_CSE_ID","419c4dcc4336542e5")
-)
-
-enc = tiktoken.encoding_for_model("gpt-3.5-turbo")
-
 class KakaoUtil:
+
+    @staticmethod
+    def load_api_key(filename):
+        try:
+            with open(filename, 'r') as file:
+                api_key = file.read()
+                return api_key.strip()
+        except Exception as e:
+            print(f"API 키 읽기 중 오류 발생: {str(e)}")
+            return None
 
     @staticmethod
     def read_file(file_path: str) -> str:
@@ -44,4 +43,17 @@ class KakaoUtil:
         search_tool = KakaoUtil.web_search_tool()
 
         return search_tool.run(user_message)
+    
+
+
+duckSearch = DuckDuckGoSearchAPIWrapper()
+duckSearch.region = 'kr-kr'
+
+api_key,ces_id = KakaoUtil.load_api_key('google_key.key').split('\n')
+googleSearch = GoogleSearchAPIWrapper(
+    google_api_key=os.getenv("GOOGLE_API_KEY",api_key),
+    google_cse_id=os.getenv("GOOGLE_CSE_ID",ces_id)
+)
+
+enc = tiktoken.encoding_for_model("gpt-3.5-turbo")
 

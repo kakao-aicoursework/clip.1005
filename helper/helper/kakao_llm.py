@@ -8,18 +8,9 @@ from langchain.prompts.chat import (
 )
 from helper.kakao_util import KakaoUtil
 
-def load_api_key(filename='api_key.key'):
-    try:
-        with open(filename, 'r') as file:
-            api_key = file.read()
-            return api_key.strip()
-    except Exception as e:
-        print(f"API 키 읽기 중 오류 발생: {str(e)}")
-        return None
-
 class KakaoLLM:
     def __init__(self, temperature=0.8, max_tokens=8000, model="gpt-3.5-turbo-16k") -> None:
-        os.environ["OPENAI_API_KEY"] = load_api_key()
+        os.environ["OPENAI_API_KEY"] = KakaoUtil.load_api_key('api_key.key')
         self.llm = ChatOpenAI(temperature=temperature, max_tokens=max_tokens, model=model)
 
     def create_chain(self, template_path, output_key):
