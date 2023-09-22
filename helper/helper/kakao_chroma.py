@@ -15,6 +15,7 @@ CHROMA_PERSIST_DIR = os.path.join("./", "chroma_persist")
 CHROMA_COLLECTION_NAME = "kakao-api-chatbot"
 
 LOADER_DICT = {
+    "txt": TextLoader,
     "py": TextLoader,
     "md": UnstructuredMarkdownLoader,
     "ipynb": NotebookLoader,

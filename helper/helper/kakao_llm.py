@@ -6,6 +6,7 @@ from langchain.prompts.chat import (
     ChatPromptTemplate,
     HumanMessagePromptTemplate,
 )
+from helper.kakao_util import KakaoUtil
 
 def load_api_key(filename='api_key.key'):
     try:
@@ -21,11 +22,11 @@ class KakaoLLM:
         os.environ["OPENAI_API_KEY"] = load_api_key()
         self.llm = ChatOpenAI(temperature=temperature, max_tokens=max_tokens, model=model)
 
-    def create_chain(self, template, output_key):
+    def create_chain(self, template_path, output_key):
         return LLMChain(
             llm=self.llm,
             prompt=ChatPromptTemplate.from_template(
-                template=template
+                template=KakaoUtil.read_file(template_path)
             ),
             output_key=output_key,
             verbose=True,

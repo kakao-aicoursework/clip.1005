@@ -1,23 +1,47 @@
 import os
-from langchain.utilities import DuckDuckGoSearchAPIWrapper
 import tiktoken
+from langchain.tools import Tool
+from langchain.utilities import DuckDuckGoSearchAPIWrapper
+from langchain.utilities import GoogleSearchAPIWrapper
 
+
+duckSearch = DuckDuckGoSearchAPIWrapper()
+duckSearch.region = 'kr-kr'
+
+googleSearch = GoogleSearchAPIWrapper(
+    google_api_key=os.getenv("GOOGLE_API_KEY","AIzaSyD0wBhIH0UCqenSjc7nu8HLEbfZI5C74OE"),
+    google_cse_id=os.getenv("GOOGLE_CSE_ID","419c4dcc4336542e5")
+)
+
+enc = tiktoken.encoding_for_model("gpt-3.5-turbo")
 
 class KakaoUtil:
 
-    search = DuckDuckGoSearchAPIWrapper()
-    search.region = 'kr-kr'
+    @staticmethod
+    def read_file(file_path: str) -> str:
+        with open(file_path, "r") as f:
+            contents = f.read()
 
-    enc = tiktoken.encoding_for_model("gpt-3.5-turbo")
+        return contents
 
     @staticmethod
     def truncate_text(text, max_tokens=3000):
-        enc = KakaoUtil.enc
         tokens = enc.encode(text)
         if len(tokens) <= max_tokens:  # 토큰 수가 이미 3000 이하라면 전체 텍스트 반환
             return text
         return enc.decode(tokens[:max_tokens])
     
-            
+    @staticmethod
+    def web_search_tool() -> Tool:
+        return Tool(
+            name="Google Search",
+            description="Search Google for recent results.",
+            func=googleSearch.run,
+        )
     
+    @staticmethod
+    def query_web_search(user_message: str) -> str:
+        search_tool = KakaoUtil.web_search_tool()
+
+        return search_tool.run(user_message)
 

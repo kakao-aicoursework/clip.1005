@@ -12,20 +12,16 @@ class KakaoHistory:
 
     histories = {}
     for json_file in glob.glob(os.path.join(HISTORY_DIR, "*.json")):
-        file_name = os.path.basename(json_file)
-        n = int(file_name.split(".")[0])
-        histories[n] = load_conversation_history(n)
+        conversation_id = os.path.basename(json_file).split(".")[0]
+        n = int(conversation_id)
+        histories[n] = load_conversation_history(conversation_id)
 
     @staticmethod
     def new_history():
         new_id = max(KakaoHistory.histories.keys(), default=0) + 1
         history = KakaoHistory.load_conversation_history(new_id)
         KakaoHistory.histories[new_id] = history
-        return history
-
-    def load_conversation_history(conversation_id: str):
-        file_path = os.path.join(HISTORY_DIR, f"{conversation_id}.json")
-        return FileChatMessageHistory(file_path)
+        return KakaoHistory(new_id)
 
     def __init__(self, conversation_id) -> None:
         self.conversation_id = conversation_id
@@ -43,12 +39,11 @@ class KakaoHistory:
         self.history.add_ai_message(bot_message)
 
 
-    def get_chat_history(self, conversation_id: str):
-        history = self.load_conversation_history(conversation_id)
+    def get_chat_history(self):
         memory = ConversationBufferMemory(
             memory_key="chat_history",
             input_key="user_message",
-            chat_memory=history,
+            chat_memory=self.history,
         )
 
         return memory.buffer
