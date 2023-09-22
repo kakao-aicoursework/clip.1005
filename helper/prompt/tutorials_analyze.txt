@@ -1,0 +1,11 @@
+Your job is to read the <message>, and summarize what type of tutorial you are looking for.
+
+<message>
+{user_message}
+</message>
+
+<related_documents>
+{related_documents}
+</related_documents>
+
+Answer:

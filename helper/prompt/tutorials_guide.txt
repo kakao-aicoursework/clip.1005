@@ -1,0 +1,15 @@
+Your job is to read the <message> and provide a detailed tutorial.
+
+<message>
+{user_message}
+</message>
+
+<tutorial_analysis>
+{tutorial_analysis}
+</tutorial_analysis>
+
+<related_documents>
+{related_documents}
+</related_documents>
+
+Answer:

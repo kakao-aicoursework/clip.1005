@@ -1,0 +1,7 @@
+Usage: This intent addresses questions about how to use the API, including details on making API calls and required parameters.
+Authentication: This intent provides information about how users can authenticate themselves with the API, including authentication tokens such as API keys.
+Endpoint: It covers available API endpoints and their functionalities, explaining which endpoints to call for specific actions.
+Format: This intent focuses on the format for making API requests, structuring request bodies, and describing response formats and data structures.
+Retrieval: This intent explains how to retrieve specific data using the API, including data filtering and search query parameters.
+Tutorials: This intent offers code examples and tutorials to help users get started with the API in various programming languages.
+Security: It provides information on data security within the API, including security measures in place and best practices for securing API requests.

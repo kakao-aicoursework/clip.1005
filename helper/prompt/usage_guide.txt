@@ -1,0 +1,15 @@
+Your job is to read the <message> and provide a detailed usage guide.
+
+<message>
+{user_message}
+</message>
+
+<tutorial_analysis>
+{usage_analysis}
+</tutorial_analysis>
+
+<related_documents>
+{related_documents}
+</related_documents>
+
+Answer:
